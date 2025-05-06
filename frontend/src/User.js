@@ -9,6 +9,7 @@ function User() {
   const [filter, setFilter] = useState('');
   const [showForm, setShowForm] = useState(false);
 const [currentItemId, setCurrentItemId] = useState(null);
+const [errors, setErrors] = useState({});
 const [customerDetails, setCustomerDetails] = useState({
   name: '',
   address: '',
@@ -93,6 +94,24 @@ const cancelButtonStyle = {
   const handleOrder = (id) => {
     setCurrentItemId(id);
     setShowForm(true);
+  };
+
+  const handleSubmit = () => {
+    if (!validateForm()) return;
+    submitOrder(); // your existing logic
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!customerDetails.name.trim()) newErrors.name = 'Name is required';
+    if (!customerDetails.address.trim()) newErrors.address = 'Address is required';
+    if (!customerDetails.phone.trim()) {
+      newErrors.phone = 'Phone number is required';
+    } else if (!/^\d{10}$/.test(customerDetails.phone)) {
+      newErrors.phone = 'Phone must be 10 digits';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
   
   const submitOrder = async () => {
@@ -314,37 +333,45 @@ const cancelButtonStyle = {
             </div>
           )}
           {showForm && (
-            <div style={modalStyle}>
-              <div style={modalContentStyle}>
-                <h2 style={{ marginBottom: '20px', color: '#333' }}>🧾 Enter Customer Details</h2>
-                <input
-                  type="text"
-                  placeholder="Name"
-                  value={customerDetails.name}
-                  onChange={e => setCustomerDetails({ ...customerDetails, name: e.target.value })}
-                  style={inputStyle}
-                />
-                <input
-                  type="text"
-                  placeholder="Address"
-                  value={customerDetails.address}
-                  onChange={e => setCustomerDetails({ ...customerDetails, address: e.target.value })}
-                  style={inputStyle}
-                />
-                <input
-                  type="text"
-                  placeholder="Phone"
-                  value={customerDetails.phone}
-                  onChange={e => setCustomerDetails({ ...customerDetails, phone: e.target.value })}
-                  style={inputStyle}
-                />
-                <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
-                  <button style={submitButtonStyle} onClick={submitOrder}>✅ Submit Order</button>
-                  <button style={cancelButtonStyle} onClick={() => setShowForm(false)}>❌ Cancel</button>
-                </div>
+          <div style={modalStyle}>
+            <div style={modalContentStyle}>
+              <h2 style={{ marginBottom: '20px', color: '#333' }}>🧾 Enter Customer Details</h2>
+
+              <input
+                type="text"
+                placeholder="Name"
+                value={customerDetails.name}
+                onChange={e => setCustomerDetails({ ...customerDetails, name: e.target.value })}
+                style={inputStyle}
+              />
+              {errors.name && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.name}</div>}
+
+              <input
+                type="text"
+                placeholder="Address"
+                value={customerDetails.address}
+                onChange={e => setCustomerDetails({ ...customerDetails, address: e.target.value })}
+                style={inputStyle}
+              />
+              {errors.address && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.address}</div>}
+
+              <input
+                type="text"
+                placeholder="Phone"
+                value={customerDetails.phone}
+                onChange={e => setCustomerDetails({ ...customerDetails, phone: e.target.value })}
+                style={inputStyle}
+              />
+              {errors.phone && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.phone}</div>}
+
+              <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
+                <button style={submitButtonStyle} onClick={handleSubmit}>✅ Submit Order</button>
+                <button style={cancelButtonStyle} onClick={() => setShowForm(false)}>❌ Cancel</button>
               </div>
             </div>
-          )}          
+          </div>
+        )}
+
         </div>
       </div>
     </div>
