@@ -16,10 +16,16 @@ function Contact() {
         <br />
       
       <div>
-        <h2>Contact Information</h2>
-        <p>Email: info@smengineering.com</p>
-        <p>Phone: +91 123 456 7890</p>
-        <p>Address: 123, Industrial Area, Hosur, Tamil Nadu, India</p>
+      Reach Us
+<br />
+  Sf No 7/52,Rajeswari Layout,Hosur,Krishnagiri, Unnamed Road, 
+  <br />
+  Hosur-635126, Tamil Nadu, India
+<br />
+
+  Manimegalai Madhavan
+<br />
+  Call 08044458747 
       </div>
     </div>
   );

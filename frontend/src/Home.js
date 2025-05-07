@@ -2,6 +2,7 @@
 import React from 'react';
 import Navbar from './Navbar';
 import './home.css';
+import Analytics from './Analytics';
 
 function Home() {
   return (
@@ -30,11 +31,11 @@ function Home() {
         <ul>
           <li>Wide Selection of Parts</li>
           <li>Quality Assurance</li>
-          <li>Fast Delivery</li>
           <li>Customer Support</li>
         </ul>
       </section>
     </div>
+    <Analytics />
       </main>
     </div>
   );
