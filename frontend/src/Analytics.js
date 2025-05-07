@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  PieChart, Pie, Cell, BarChart, Bar,
+  PieChart, Pie, Cell, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from 'recharts';
 
@@ -64,7 +64,7 @@ const Analytics = () => {
   const getCategoryDistribution = () => {
     const categoryMap = {};
     orders.forEach(order => {
-      const cat = order.productSnapshot?.category || 'Uncategorized';
+      const cat = order.productSnapshot?.category || 'Others';
       if (!categoryMap[cat]) categoryMap[cat] = 0;
       categoryMap[cat] += 1;
     });
@@ -88,20 +88,6 @@ const Analytics = () => {
       if (!orderCounts[name]) orderCounts[name] = 0;
       orderCounts[name] += order.quantityOrdered;
     });
-    // Orders Over Time (Line Chart)
-const getOrderTrendData = () => {
-    const trendMap = {};
-    orders.forEach(order => {
-      const date = new Date(order.dateOrdered || order.createdAt).toLocaleDateString();
-      if (!trendMap[date]) trendMap[date] = 0;
-      trendMap[date] += 1;
-    });
-  
-    return Object.entries(trendMap)
-      .map(([date, count]) => ({ date, count }))
-      .sort((a, b) => new Date(a.date) - new Date(b.date));
-  };
-  
 
     const availability = stockEntries.map(stock => {
       const name = stock.companyName || 'Unnamed';
@@ -113,6 +99,20 @@ const getOrderTrendData = () => {
     });
 
     return availability.filter(item => item.stock > 0 || item.ordered > 0);
+  };
+
+  // Orders Over Time (Line Chart)
+  const getOrderTrendData = () => {
+    const trendMap = {};
+    orders.forEach(order => {
+      const date = new Date(order.orderDate || order.createdAt).toLocaleDateString();
+      if (!trendMap[date]) trendMap[date] = 0;
+      trendMap[date] += 1;
+    });
+
+    return Object.entries(trendMap)
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
   };
 
   if (loading) return (
@@ -136,8 +136,6 @@ const getOrderTrendData = () => {
 
   return (
     <div style={{ padding: '30px' }}>
-      <h2>User-Friendly Analytics</h2>
-      <p><strong>Total Revenue:</strong> ₹{getTotalRevenue().toFixed(2)}</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '20px', marginTop: '20px' }}>
         {/* Chart 1: Top Ordered Products */}
@@ -195,7 +193,21 @@ const getOrderTrendData = () => {
             </BarChart>
           </ResponsiveContainer>
         </div>
-        
+
+        {/* Chart 4: Order Trend Over Time */}
+        <div style={{ backgroundColor: '#f0f8ff', padding: '20px', borderRadius: '10px' }}>
+          <h3>Demand Acceleration</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={getOrderTrendData()}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="count" name="Orders" stroke="#8884d8" strokeWidth={2} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
     </div>
   );
