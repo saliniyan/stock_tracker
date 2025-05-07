@@ -60,20 +60,30 @@ const Analytics = () => {
       .slice(0, 5);
   };
 
-  // Orders by Category
   const getCategoryDistribution = () => {
     const categoryMap = {};
+    const validCategories = [
+      "Engine", "Brakes", "Transmission", "Suspension",
+      "Electrical", "Body", "Interior", "Other"
+    ];
+  
     orders.forEach(order => {
-      const cat = order.productSnapshot?.category || 'Others';
+      let cat = order.productSnapshot?.category;
+  
+      if (!validCategories.includes(cat)) {
+        cat = "Other"; // Default to "Other" instead of "Others"
+      }
+  
       if (!categoryMap[cat]) categoryMap[cat] = 0;
       categoryMap[cat] += 1;
     });
-
+  
     return Object.entries(categoryMap).map(([name, value]) => ({
       name,
       value
     }));
   };
+  
 
   // Total Revenue
   const getTotalRevenue = () => {
@@ -149,7 +159,7 @@ const Analytics = () => {
               <Tooltip />
               <Legend />
               <Bar dataKey="count" name="Quantity Ordered" fill="#8884d8" />
-              <Bar dataKey="totalRevenue" name="Revenue (₹)" fill="#82ca9d" />
+              <Bar dataKey="totalRevenue" name="Cost (₹)" fill="#82ca9d" />
             </BarChart>
           </ResponsiveContainer>
         </div>
