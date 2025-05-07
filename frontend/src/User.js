@@ -73,7 +73,7 @@ function User() {
     // Fetch inventory data from MongoDB
     const fetchInventory = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/stock');
+        const res = await fetch('https://stock-tracker-nox1.onrender.com/api/stock');
         if (res.ok) {
           const stockEntries = await res.json();
           setStockEntries(stockEntries);
@@ -88,7 +88,7 @@ function User() {
     // Fetch order history from MongoDB
     const fetchOrderHistory = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/orders');
+        const res = await fetch('https://stock-tracker-nox1.onrender.com/api/orders');
         if (res.ok) {
           const orderHistory = await res.json();
           setOrderHistory(orderHistory);
@@ -155,7 +155,7 @@ function User() {
     };
 
     try {
-      const res = await fetch('http://localhost:5000/api/orders', {
+      const res = await fetch('https://stock-tracker-nox1.onrender.com/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(order),
@@ -176,7 +176,7 @@ function User() {
         setStockEntries(updatedEntries);
         
         // Refresh order history
-        const orderRes = await fetch('http://localhost:5000/api/orders');
+        const orderRes = await fetch('https://stock-tracker-nox1.onrender.com/api/orders');
         if (orderRes.ok) {
           const updatedOrderHistory = await orderRes.json();
           setOrderHistory(updatedOrderHistory);

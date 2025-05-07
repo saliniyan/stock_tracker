@@ -17,8 +17,8 @@ const Analytics = () => {
       try {
         setLoading(true);
         const [stockRes, ordersRes] = await Promise.all([
-          fetch('http://localhost:5000/api/stock'),
-          fetch('http://localhost:5000/api/orders')
+          fetch('https://stock-tracker-nox1.onrender.com/api/stock'),
+          fetch('https://stock-tracker-nox1.onrender.com/api/orders')
         ]);
 
         if (!stockRes.ok || !ordersRes.ok) throw new Error('Error fetching data');

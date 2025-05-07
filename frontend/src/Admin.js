@@ -24,7 +24,7 @@ function InventoryProvider({ children }) {
   useEffect(() => {
     const fetchStockEntries = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/stock'); // Adjust the API route if needed
+        const response = await axios.get('https://stock-tracker-nox1.onrender.com/api/stock'); // Adjust the API route if needed
         
         // Process data to ensure totalCost is calculated for each entry
         const processedEntries = response.data.map(entry => ({
@@ -61,7 +61,7 @@ function InventoryProvider({ children }) {
       // Log what we're sending for debugging
       console.log("Sending to MongoDB:", processedEntries);
       
-      const response = await axios.post('http://localhost:5000/api/stock', { entries: processedEntries });
+      const response = await axios.post('https://stock-tracker-nox1.onrender.com/api/stock', { entries: processedEntries });
       console.log("Response from server:", response.data);
       
       // Only update state if the server operation was successful
@@ -77,7 +77,7 @@ function InventoryProvider({ children }) {
   const refreshInventory = useCallback(() => {
     const fetchStockEntries = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/stock');
+        const response = await axios.get('https://stock-tracker-nox1.onrender.com/api/stock');
         
         // Process data to ensure totalCost is calculated for each entry
         const processedEntries = response.data.map(entry => ({
@@ -330,7 +330,7 @@ function Orders() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/orders')
+    fetch('https://stock-tracker-nox1.onrender.com/api/orders')
       .then(res => {
         if (!res.ok) throw new Error('Server error');
         return res.json();
