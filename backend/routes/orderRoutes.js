@@ -25,7 +25,7 @@ router.post('/', validateOrderData, async (req, res) => {
     }
     
     // Find the product in stock
-    const product = await Stock.findOne({ id: productId });
+    const product = await Stock.findById(productId);
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }

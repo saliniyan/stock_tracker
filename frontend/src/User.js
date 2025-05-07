@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import mongoose from 'mongoose';
 import Navbar from './Navbar';
 
 function User() {
@@ -144,22 +142,16 @@ function User() {
     }
 
     const item = stockEntries.find(entry => entry._id === currentItemId);
-    if (!item || item.quantityInStock < qty) {
-      alert(`Only ${item?.quantityInStock || 0} items available.`);
+    if (!item || item.spares < qty) {
+      alert(`Only ${item?.spares || 0} items available.`);
       return;
     }
 
     const order = {
-      itemId: new mongoose.Types.ObjectId(currentItemId),
-      quantityOrdered: qty,
-      orderDate: new Date().toISOString(), // Optional if the backend defaults it
-      orderTotal: qty * item.pricePerUnit,
+      productId: currentItemId,
+      quantity: qty, // Changed from quantityOrdered to quantity to match backend
       customerDetails,
-      productSnapshot: {
-        name: item.partName,
-        price: item.pricePerUnit,
-        description: item.description || '',
-      }
+      // Remove productSnapshot as backend creates it from product data
     };
 
     try {
@@ -177,24 +169,21 @@ function User() {
         // Update inventory after order is placed
         const updatedEntries = stockEntries.map(entry =>
           entry._id === currentItemId
-            ? { ...entry, quantityInStock: entry.quantityInStock - qty }
+            ? { ...entry, spares: entry.spares - qty }
             : entry
         );
 
         setStockEntries(updatedEntries);
-
-        // Update inventory in the backend
-        await fetch('http://localhost:5000/api/stock', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updatedEntries),
-        });
-
-        // Optionally update order history in MongoDB
-        const updatedOrderHistory = [...orderHistory, order];
-        setOrderHistory(updatedOrderHistory);
+        
+        // Refresh order history
+        const orderRes = await fetch('http://localhost:5000/api/orders');
+        if (orderRes.ok) {
+          const updatedOrderHistory = await orderRes.json();
+          setOrderHistory(updatedOrderHistory);
+        }
       } else {
-        alert('Failed to place order.');
+        const errorData = await res.json();
+        alert(`Failed to place order: ${errorData.message}`);
       }
     } catch (err) {
       console.error('Order error:', err);
@@ -270,9 +259,6 @@ function User() {
               ))}
             </ul>
           </div>
-          
-          {/* Quick Links */}
-          
         </div>
         
         {/* Main Content */}
@@ -301,7 +287,7 @@ function User() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
               {filteredEntries.map(entry => (
                 <div 
-                  key={entry.id} 
+                  key={entry._id} 
                   style={{ 
                     padding: '15px', 
                     backgroundColor: '#f9f9f9', 
@@ -343,13 +329,13 @@ function User() {
                         type="number"
                         min="1"
                         max={entry.spares}
-                        value={orderQuantities[entry.id] || ''}
-                        onChange={(e) => handleInputChange(entry.id, e.target.value)}
+                        value={orderQuantities[entry._id] || ''}
+                        onChange={(e) => handleInputChange(entry._id, e.target.value)}
                         style={{ width: '60px', marginRight: '10px', padding: '5px' }}
                         disabled={entry.spares <= 0}
                       />
                       <button
-                        onClick={() => handleOrder(entry.id)}
+                        onClick={() => handleOrder(entry._id)}
                         disabled={entry.spares <= 0}
                         style={{
                           padding: '8px 12px',
