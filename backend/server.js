@@ -2,35 +2,48 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
-const orderRoutes = require('./routes/orderRoutes'); // Adjust the path if needed
+const { PORT, MONGODB_URI } = require('./config/config');
+const orderRoutes = require('./routes/orderRoutes');
+const stockRoutes = require('./routes/stockRoutes');
 
 // Initialize Express app
 const app = express();
 
 // Use middleware
 app.use(cors()); // Enable CORS
-app.use(bodyParser.json()); // Parse JSON bodies
+app.use(bodyParser.json({ limit: '10mb' })); // Parse JSON bodies with increased size limit
+app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Parse URL-encoded bodies
+
+// Logger middleware
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
+  next();
+});
+
+// Routes
 app.use('/api/orders', orderRoutes);
+app.use('/api/stock', stockRoutes);
 
-mongoose.connect('mongodb+srv://saliniyan:saliniyan@cluster0.tp4v7al.mongodb.net/consiltency?retryWrites=true&w=majority&appName=Cluster0')
-.then(() => console.log('Connected to MongoDB Atlas'))
-.catch((err) => console.log('Error connecting to MongoDB Atlas: ', err));
-
-
-// Basic route (ensure this is correct)
+// Basic route
 app.get('/', (req, res) => {
-  res.send('Hello from the server!');
+  res.send('Car Spare Parts Inventory Tracker API Server');
 });
 
-// Define your routes here
-// For example:
-app.get('/api/parts', (req, res) => {
-  // Respond with spare parts data (replace with actual logic)
-  res.json({ message: 'List of spare parts' });
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Server error:', err.stack);
+  res.status(500).json({
+    message: 'An unexpected error occurred',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+  });
 });
+
+// Connect to MongoDB Atlas
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('Connected to MongoDB Atlas'))
+  .catch((err) => console.log('Error connecting to MongoDB Atlas: ', err));
 
 // Set the server to listen on a port
-const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

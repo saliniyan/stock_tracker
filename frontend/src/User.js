@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import mongoose from 'mongoose'; // add this import if you don't already have it
+import mongoose from 'mongoose';
+import Navbar from './Navbar';
 
 function User() {
   const [stockEntries, setStockEntries] = useState([]);
@@ -8,80 +9,101 @@ function User() {
   const [orderHistory, setOrderHistory] = useState([]);
   const [filter, setFilter] = useState('');
   const [showForm, setShowForm] = useState(false);
-const [currentItemId, setCurrentItemId] = useState(null);
-const [errors, setErrors] = useState({});
-const [customerDetails, setCustomerDetails] = useState({
-  name: '',
-  address: '',
-  phone: ''
-});
-const modalStyle = {
-  position: 'fixed',
-  top: 0, left: 0,
-  width: '100%', height: '100%',
-  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  zIndex: 1000,
-};
+  const [currentItemId, setCurrentItemId] = useState(null);
+  const [errors, setErrors] = useState({});
+  const [customerDetails, setCustomerDetails] = useState({
+    name: '',
+    address: '',
+    phone: ''
+  });
 
-const modalContentStyle = {
-  backgroundColor: '#fff',
-  padding: '30px',
-  borderRadius: '12px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-  minWidth: '300px',
-  width: '100%',
-  maxWidth: '400px',
-  display: 'flex',
-  flexDirection: 'column',
-};
+  const modalStyle = {
+    position: 'fixed',
+    top: 0, left: 0,
+    width: '100%', height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
+  };
 
-const inputStyle = {
-  padding: '12px',
-  marginBottom: '12px',
-  borderRadius: '6px',
-  border: '1px solid #ccc',
-  fontSize: '16px',
-  outline: 'none',
-};
+  const modalContentStyle = {
+    backgroundColor: '#fff',
+    padding: '30px',
+    borderRadius: '12px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+    minWidth: '300px',
+    width: '100%',
+    maxWidth: '400px',
+    display: 'flex',
+    flexDirection: 'column',
+  };
 
-const submitButtonStyle = {
-  flex: 1,
-  padding: '10px 20px',
-  backgroundColor: '#4CAF50',
-  color: 'white',
-  border: 'none',
-  borderRadius: '6px',
-  cursor: 'pointer',
-  fontWeight: 'bold',
-};
+  const inputStyle = {
+    padding: '12px',
+    marginBottom: '12px',
+    borderRadius: '6px',
+    border: '1px solid #ccc',
+    fontSize: '16px',
+    outline: 'none',
+  };
 
-const cancelButtonStyle = {
-  flex: 1,
-  padding: '10px 20px',
-  backgroundColor: '#f44336',
-  color: 'white',
-  border: 'none',
-  borderRadius: '6px',
-  cursor: 'pointer',
-  fontWeight: 'bold',
-};
+  const submitButtonStyle = {
+    flex: 1,
+    padding: '10px 20px',
+    backgroundColor: '#4CAF50',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+  };
 
-  
+  const cancelButtonStyle = {
+    flex: 1,
+    padding: '10px 20px',
+    backgroundColor: '#f44336',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+  };
+
   useEffect(() => {
-    // Load inventory data
-    const savedStockEntries = localStorage.getItem('carStockEntries');
-    if (savedStockEntries) {
-      setStockEntries(JSON.parse(savedStockEntries));
-    }
-    
-    // Load order history
-    const savedOrderHistory = localStorage.getItem('orderHistory');
-    if (savedOrderHistory) {
-      setOrderHistory(JSON.parse(savedOrderHistory));
-    }
+    // Fetch inventory data from MongoDB
+    const fetchInventory = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/stock');
+        if (res.ok) {
+          const stockEntries = await res.json();
+          setStockEntries(stockEntries);
+        } else {
+          console.error('Failed to fetch inventory data');
+        }
+      } catch (err) {
+        console.error('Error fetching inventory:', err);
+      }
+    };
+
+    // Fetch order history from MongoDB
+    const fetchOrderHistory = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/orders');
+        if (res.ok) {
+          const orderHistory = await res.json();
+          setOrderHistory(orderHistory);
+        } else {
+          console.error('Failed to fetch order history');
+        }
+      } catch (err) {
+        console.error('Error fetching order history:', err);
+      }
+    };
+
+    fetchInventory();
+    fetchOrderHistory();
   }, []);
 
   const handleInputChange = (id, value) => {
@@ -98,7 +120,7 @@ const cancelButtonStyle = {
 
   const handleSubmit = () => {
     if (!validateForm()) return;
-    submitOrder(); // your existing logic
+    submitOrder();
   };
 
   const validateForm = () => {
@@ -113,53 +135,64 @@ const cancelButtonStyle = {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  
+
   const submitOrder = async () => {
     const qty = parseInt(orderQuantities[currentItemId]);
     if (isNaN(qty) || qty <= 0) {
       alert('Please enter a valid quantity.');
       return;
     }
-  
-    const item = stockEntries.find(entry => entry.id === currentItemId);
-    if (!item || item.spares < qty) {
-      alert(`Only ${item?.spares || 0} items available.`);
+
+    const item = stockEntries.find(entry => entry._id === currentItemId);
+    if (!item || item.quantityInStock < qty) {
+      alert(`Only ${item?.quantityInStock || 0} items available.`);
       return;
     }
-  
+
     const order = {
       itemId: new mongoose.Types.ObjectId(currentItemId),
       quantityOrdered: qty,
       orderDate: new Date().toISOString(), // Optional if the backend defaults it
-      orderTotal: qty * item.price,
+      orderTotal: qty * item.pricePerUnit,
       customerDetails,
       productSnapshot: {
-        name: item.companyName,
-        price: item.price,
+        name: item.partName,
+        price: item.pricePerUnit,
         description: item.description || '',
       }
-    };    
-  
+    };
+
     try {
       const res = await fetch('http://localhost:5000/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(order),
       });
-  
+
       if (res.ok) {
         alert('Order placed!');
         setShowForm(false);
         setCustomerDetails({ name: '', address: '', phone: '' });
-  
+
+        // Update inventory after order is placed
         const updatedEntries = stockEntries.map(entry =>
-          entry.id === currentItemId
-            ? { ...entry, spares: entry.spares - qty }
+          entry._id === currentItemId
+            ? { ...entry, quantityInStock: entry.quantityInStock - qty }
             : entry
         );
-  
+
         setStockEntries(updatedEntries);
-        localStorage.setItem('carStockEntries', JSON.stringify(updatedEntries));
+
+        // Update inventory in the backend
+        await fetch('http://localhost:5000/api/stock', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedEntries),
+        });
+
+        // Optionally update order history in MongoDB
+        const updatedOrderHistory = [...orderHistory, order];
+        setOrderHistory(updatedOrderHistory);
       } else {
         alert('Failed to place order.');
       }
@@ -188,6 +221,9 @@ const cancelButtonStyle = {
     .sort((a, b) => a[0].localeCompare(b[0]));
 
   return (
+    <div>
+    <Navbar />
+    <br />
     <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
       <header style={{ borderBottom: '1px solid #ddd', paddingBottom: '20px', marginBottom: '20px' }}>
         <h1>Car Spare Parts Store</h1>
@@ -374,6 +410,7 @@ const cancelButtonStyle = {
 
         </div>
       </div>
+    </div>
     </div>
   );
 }

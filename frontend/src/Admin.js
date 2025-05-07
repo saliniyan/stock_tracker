@@ -4,7 +4,8 @@ import {
   LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
-
+import Navbar from './Navbar';
+import axios from 'axios';
 
 // Create a context for inventory management
 const InventoryContext = createContext();
@@ -14,45 +15,86 @@ function useInventory() {
   return useContext(InventoryContext);
 }
 
-// Inventory Provider component
+
 function InventoryProvider({ children }) {
-  // Sample initial data
-  const sampleStockEntries = [
-    {
-      id: 1,
-      date: '2025-03-15',
-      price: 45.99,
-      spares: 4,
-      totalCost: 183.96,
-      companyName: 'Brake Pads',
-      partNumber: 'BP-2025',
-      category: 'Brakes',
-      description: 'High-performance ceramic brake pads'
-    }
-  ];
 
-  const [stockEntries, setStockEntries] = useState(sampleStockEntries);
-
-  // Load data from localStorage on initial render
+  const [stockEntries, setStockEntries] = useState([]);
+  
+  // Fetch inventory data from MongoDB when the component mounts
   useEffect(() => {
-    const savedStockEntries = localStorage.getItem('carStockEntries');
-    if (savedStockEntries) {
-      setStockEntries(JSON.parse(savedStockEntries));
-    }
+    const fetchStockEntries = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/stock'); // Adjust the API route if needed
+        
+        // Process data to ensure totalCost is calculated for each entry
+        const processedEntries = response.data.map(entry => ({
+          ...entry,
+          // Ensure numeric types
+          price: parseFloat(entry.price || 0),
+          spares: parseFloat(entry.spares || 0),
+          // Calculate totalCost if it doesn't exist
+          totalCost: entry.totalCost || (parseFloat(entry.price || 0) * parseFloat(entry.spares || 0))
+        }));
+        
+        setStockEntries(processedEntries);
+      } catch (error) {
+        console.error('Error fetching inventory data:', error);
+      }
+    };
+    fetchStockEntries();
   }, []);
 
-  // Function to save inventory to localStorage
-  const saveInventory = (entries) => {
-    localStorage.setItem('carStockEntries', JSON.stringify(entries));
-    setStockEntries(entries);
-  };
 
-  // Use useCallback to prevent infinite loops
-  const refreshInventory = useCallback(() => {
-    const savedStockEntries = localStorage.getItem('carStockEntries');
-    if (savedStockEntries) {
-      setStockEntries(JSON.parse(savedStockEntries));
+  // Function to save inventory to MongoDB
+  const saveInventory = async (entries) => {
+    try {
+      // Process entries to ensure totalCost is set for each one
+      const processedEntries = entries.map(entry => ({
+        ...entry,
+        // Ensure numeric types 
+        price: parseFloat(entry.price || 0),
+        spares: parseFloat(entry.spares || 0),
+        // Calculate totalCost
+        totalCost: parseFloat(entry.price || 0) * parseFloat(entry.spares || 0)
+      }));
+      
+      // Log what we're sending for debugging
+      console.log("Sending to MongoDB:", processedEntries);
+      
+      const response = await axios.post('http://localhost:5000/api/stock', { entries: processedEntries });
+      console.log("Response from server:", response.data);
+      
+      // Only update state if the server operation was successful
+      if (response.status === 200 || response.status === 201) {
+        setStockEntries(processedEntries);
+      }
+    } catch (error) {
+      console.error('Error saving inventory:', error);
+      // Add user notification here
+      alert("Failed to save to database. Check console for details.");
     }
+  };
+  const refreshInventory = useCallback(() => {
+    const fetchStockEntries = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/stock');
+        
+        // Process data to ensure totalCost is calculated for each entry
+        const processedEntries = response.data.map(entry => ({
+          ...entry,
+          // Ensure numeric types
+          price: parseFloat(entry.price || 0),
+          spares: parseFloat(entry.spares || 0),
+          // Calculate totalCost if it doesn't exist
+          totalCost: entry.totalCost || (parseFloat(entry.price || 0) * parseFloat(entry.spares || 0))
+        }));
+        
+        setStockEntries(processedEntries);
+      } catch (error) {
+        console.error('Error refreshing inventory data:', error);
+      }
+    };
+    fetchStockEntries();
   }, []);
 
   // Value object to be provided by the context
@@ -74,39 +116,41 @@ function InventoryProvider({ children }) {
 function Admin() {
   return (
     <InventoryProvider>
-      <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-        <header style={{ borderBottom: '1px solid #ddd', paddingBottom: '20px', marginBottom: '20px' }}>
-          <h1>Car Spare Parts Inventory Tracker</h1>
-          <nav style={{ marginTop: '20px' }}>
-            <ul style={{ display: 'flex', gap: '20px', listStyle: 'none', padding: 0 }}>
-              <li>
-                <Link to="/admin" style={{ textDecoration: 'none', color: '#333', fontWeight: 'bold' }}>Dashboard</Link>
-              </li>
-              <li>
-                <Link to="/admin/inventory" style={{ textDecoration: 'none', color: '#333', fontWeight: 'bold' }}>Inventory</Link>
-              </li>
-              <li>
-                <Link to="/admin/parts" style={{ textDecoration: 'none', color: '#333', fontWeight: 'bold' }}>Spare Parts</Link>
-              </li>
-              <li>
-                <Link to="/admin/reports" style={{ textDecoration: 'none', color: '#333', fontWeight: 'bold' }}>Reports</Link>
-              </li>
-              <li>
-                <Link to="/admin/orders" style={{ textDecoration: 'none', color: '#333', fontWeight: 'bold' }}>Orders</Link>
-              </li>
+      <div>
+        <Navbar />
+        <div className="container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+          <header style={{ borderBottom: '1px solid #ddd', paddingBottom: '20px', marginBottom: '20px' }}>
+            <h1>Car Spare Parts Inventory Tracker</h1>
+            <nav style={{ marginTop: '20px' }}>
+              <ul style={{ display: 'flex', gap: '20px', listStyle: 'none', padding: 0 }}>
+                <li>
+                  <Link to="/admin" style={{ textDecoration: 'none', color: '#333', fontWeight: 'bold' }}>Dashboard</Link>
+                </li>
+                <li>
+                  <Link to="/admin/inventory" style={{ textDecoration: 'none', color: '#333', fontWeight: 'bold' }}>Inventory</Link>
+                </li>
+                <li>
+                  <Link to="/admin/parts" style={{ textDecoration: 'none', color: '#333', fontWeight: 'bold' }}>Spare Parts</Link>
+                </li>
+                <li>
+                  <Link to="/admin/reports" style={{ textDecoration: 'none', color: '#333', fontWeight: 'bold' }}>Reports</Link>
+                </li>
+                <li>
+                  <Link to="/admin/orders" style={{ textDecoration: 'none', color: '#333', fontWeight: 'bold' }}>Orders</Link>
+                </li>
+              </ul>
+            </nav>
+          </header>
 
-            </ul>
-          </nav>
-        </header>
-
-        <Routes>
-          <Route index element={<Dashboard />} />
-          <Route path="inventory" element={<Inventory />} />
-          <Route path="parts" element={<SpareParts />} />
-          <Route path="parts/:partName" element={<SparePartDetail />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="orders" element={<Orders />} />
-        </Routes>
+          <Routes>
+            <Route index element={<Dashboard />} />
+            <Route path="inventory" element={<Inventory />} />
+            <Route path="parts" element={<SpareParts />} />
+            <Route path="parts/:partName" element={<SparePartDetail />} />
+            <Route path="reports" element={<Reports />} />
+            <Route path="orders" element={<Orders />} />
+          </Routes>
+        </div>
       </div>
     </InventoryProvider>
   );

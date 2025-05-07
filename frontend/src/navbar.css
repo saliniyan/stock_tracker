@@ -1,0 +1,84 @@
+/* Navbar Styles */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1E40AF; /* Dark blue */
+    color: white;
+    padding: 10px 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.navbar h1 {
+    font-size: 24px;
+    margin: 0;
+}
+
+.navbar nav {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.navbar nav a,
+.navbar nav button {
+    text-decoration: none;
+    color: white;
+    padding: 8px 16px;
+    background-color: #2d66c9; /* Green */
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.3s;
+}
+
+/* Hover effects for links and buttons */
+.navbar nav a:hover,
+.navbar nav button:hover {
+    background-color: #1c5ac4; /* Lighter green */
+}
+
+.navbar nav a:active,
+.navbar nav button:active {
+    background-color: #2d66c9;/* Dark green */
+}
+
+/* Styling for admin login icon */
+.admin-login-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 2px solid white;
+    background-color:  #2d66c9;/* Green */
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.admin-login-icon:hover {
+    background-color:  #2d66c9; /* Lighter green */
+}
+
+/* For small screen devices */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .navbar h1 {
+        margin-bottom: 10px;
+    }
+
+    .navbar nav {
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .navbar nav a,
+    .navbar nav button {
+        width: 100%;
+        text-align: center;
+    }
+}
