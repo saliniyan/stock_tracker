@@ -30,7 +30,7 @@ app.get('/', (req, res) => {
 
 // Frontend checks if 2 scans have happened before enabling order submission
 app.get('/api/check-scan', (req, res) => {
-  res.json({ scanned: scanCount >= 2 });
+  res.json({ scanned: scanCount >= 1 });
 });
 
 // Reset scan count after successful order submission
