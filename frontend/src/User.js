@@ -116,10 +116,21 @@ function User() {
     setShowForm(true);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validateForm()) return;
-    submitOrder();
+  
+    const wasScanned = await axios.get('https://stock-tracker-nox1.onrender.com/api/check-scan')
+      .then(res => res.data.scanned)
+      .catch(() => false);
+  
+    if (!wasScanned) {
+      alert('❌ Please scan the QR code before proceeding.');
+      return;
+    }
+  
+    submitOrder(); // Proceed if scanned
   };
+  
 
   const validateForm = () => {
     const newErrors = {};

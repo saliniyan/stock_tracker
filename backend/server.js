@@ -24,9 +24,17 @@ app.use((req, res, next) => {
 app.use('/api/orders', orderRoutes);
 app.use('/api/stock', stockRoutes);
 
-// Basic route
+let qrScanned = false;
+
+// Called when QR is scanned
 app.get('/', (req, res) => {
-  res.send('Car Spare Parts Inventory Tracker API Server');
+  qrScanned = true;
+  res.send("Car Spare Parts Inventory Tracker API Server");
+});
+
+// Called by frontend before submitting
+app.get('/api/check-scan', (req, res) => {
+  res.json({ scanned: qrScanned });
 });
 
 // Error handling middleware
