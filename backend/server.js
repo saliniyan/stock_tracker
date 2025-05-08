@@ -3,7 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const { PORT, MONGODB_URI } = require('./config/config');
-const Order = require('./models/Order'); // Ensure you have this model defined
+const orderRoutes = require('./routes/orderRoutes');
 const stockRoutes = require('./routes/stockRoutes');
 
 const app = express();
@@ -19,46 +19,28 @@ app.use((req, res, next) => {
   next();
 });
 
-// Global state for QR tracking
-let times = 0;
-let qrScanned = false;
+// Global scan tracking
+let scanCount = 0;
 
-// Route: simulate QR scan
+// QR scan endpoint (frontend hits this on each scan)
 app.get('/', (req, res) => {
-  times++;
-  if (times >= 2) {
-    qrScanned = true;
-  }
-  res.send("Car Spare Parts Inventory Tracker API Server");
+  scanCount++;
+  res.send("QR scan registered.");
 });
 
-// Check if QR was scanned twice
+// Frontend checks if 2 scans have happened before enabling order submission
 app.get('/api/check-scan', (req, res) => {
-  res.json({ scanned: qrScanned });
+  res.json({ scanned: scanCount >= 2 });
 });
 
-// Submit order (requires 2 scans)
-app.post('/api/orders', async (req, res) => {
-  try {
-    if (!qrScanned) {
-      return res.status(400).json({ message: 'QR code not scanned twice yet' });
-    }
-
-    const order = new Order(req.body);
-    await order.save();
-
-    // Reset scan count after submission
-    times = 0;
-    qrScanned = false;
-
-    res.status(201).json({ message: 'Order submitted successfully', order });
-  } catch (err) {
-    console.error('Order submission error:', err);
-    res.status(500).json({ message: 'Failed to submit order' });
-  }
+// Reset scan count after successful order submission
+app.post('/api/reset-scan', (req, res) => {
+  scanCount = 0;
+  res.json({ message: 'QR scan count reset.' });
 });
 
-// Stock routes
+// Routes
+app.use('/api/orders', orderRoutes);  // Assume orderRoutes internally calls /api/reset-scan after storing
 app.use('/api/stock', stockRoutes);
 
 // Error handling
@@ -70,7 +52,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Connect to MongoDB and start server
+// MongoDB Connection and Server Start
 mongoose.connect(MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB Atlas');
@@ -78,6 +60,4 @@ mongoose.connect(MONGODB_URI)
       console.log(`Server running on port ${PORT}`);
     });
   })
-  .catch((err) => {
-    console.log('Error connecting to MongoDB Atlas:', err);
-  });
+  .catch((err) => console.log('Error connecting to MongoDB Atlas: ', err));
