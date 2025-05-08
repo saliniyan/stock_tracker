@@ -83,6 +83,7 @@ function QRDisplay({ onScan, onCancel }) {
 }
 
 function User() {
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [stockEntries, setStockEntries] = useState([]);
   const [orderQuantities, setOrderQuantities] = useState({});
   const [orderHistory, setOrderHistory] = useState([]);
@@ -485,64 +486,87 @@ function User() {
 
           {/* Customer Details Modal */}
           {showForm && (
-            <div style={modalStyle}>
-              <div style={modalContentStyle}>
-                <h2 style={{ marginBottom: '20px', color: '#333' }}>🧾 Enter Customer Details</h2>
+  <div style={modalStyle}>
+    <div style={modalContentStyle}>
+      <h2 style={{ marginBottom: '20px', color: '#333' }}>🧾 Enter Customer Details</h2>
 
-                {showQR ? (
-                  <QRDisplay onScan={handleQRScan} onCancel={handleQRCancel} />
-                ) : (
-                  <>
-                    {statusMessage && (
-                      <div style={{ 
-                        padding: '10px', 
-                        backgroundColor: '#ffebee', 
-                        borderRadius: '5px',
-                        marginBottom: '15px',
-                        color: '#d32f2f'
-                      }}>
-                        {statusMessage}
-                      </div>
-                    )}
-                
-                    <input
-                      type="text"
-                      placeholder="Name"
-                      value={customerDetails.name}
-                      onChange={e => setCustomerDetails({ ...customerDetails, name: e.target.value })}
-                      style={inputStyle}
-                    />
-                    {errors.name && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.name}</div>}
-
-                    <input
-                      type="text"
-                      placeholder="Address"
-                      value={customerDetails.address}
-                      onChange={e => setCustomerDetails({ ...customerDetails, address: e.target.value })}
-                      style={inputStyle}
-                    />
-                    {errors.address && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.address}</div>}
-
-                    <input
-                      type="text"
-                      placeholder="Phone"
-                      value={customerDetails.phone}
-                      onChange={e => setCustomerDetails({ ...customerDetails, phone: e.target.value })}
-                      style={inputStyle}
-                    />
-                    {errors.phone && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.phone}</div>}
-                    
-                    {errors.quantity && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.quantity}</div>}
-
-                    <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
-                      <button style={submitButtonStyle} onClick={handleRequestQR}>✅ Submit Order</button>
-                      <button style={cancelButtonStyle} onClick={() => setShowForm(false)}>❌ Cancel</button>
-                    </div>
-                  </>
-                )}
-              </div>
+      {showQR ? (
+        <QRDisplay onScan={handleQRScan} onCancel={handleQRCancel} />
+      ) : (
+        <>
+          {statusMessage && (
+            <div style={{ 
+              padding: '10px', 
+              backgroundColor: '#ffebee', 
+              borderRadius: '5px',
+              marginBottom: '15px',
+              color: '#d32f2f'
+            }}>
+              {statusMessage}
             </div>
           )}
+
+          <input
+            type="text"
+            placeholder="Name"
+            value={customerDetails.name}
+            onChange={e => setCustomerDetails({ ...customerDetails, name: e.target.value })}
+            style={inputStyle}
+          />
+          {errors.name && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.name}</div>}
+
+          <input
+            type="text"
+            placeholder="Address"
+            value={customerDetails.address}
+            onChange={e => setCustomerDetails({ ...customerDetails, address: e.target.value })}
+            style={inputStyle}
+          />
+          {errors.address && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.address}</div>}
+
+          <input
+            type="text"
+            placeholder="Phone"
+            value={customerDetails.phone}
+            onChange={e => setCustomerDetails({ ...customerDetails, phone: e.target.value })}
+            style={inputStyle}
+          />
+          {errors.phone && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.phone}</div>}
+
+          {errors.quantity && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.quantity}</div>}
+
+          <div style={{ marginTop: '15px', marginBottom: '10px' }}>
+            <label style={{ fontSize: '14px' }}>
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                style={{ marginRight: '8px' }}
+              />
+              Once paid, not refundable
+            </label>
+          </div>
+
+          <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
+            <button 
+              style={{ 
+                ...submitButtonStyle, 
+                opacity: agreedToTerms ? 1 : 0.5, 
+                cursor: agreedToTerms ? 'pointer' : 'not-allowed' 
+              }}
+              onClick={handleRequestQR}
+              disabled={!agreedToTerms}
+            >
+              ✅ Submit Order
+            </button>
+            <button style={cancelButtonStyle} onClick={() => setShowForm(false)}>❌ Cancel</button>
+          </div>
+        </>
+      )}
+    </div>
+  </div>
+)}
+
         </div>
       </div>
     </div>
