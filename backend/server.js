@@ -3,41 +3,65 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const { PORT, MONGODB_URI } = require('./config/config');
-const orderRoutes = require('./routes/orderRoutes');
+const Order = require('./models/Order'); // Ensure you have this model defined
 const stockRoutes = require('./routes/stockRoutes');
 
-// Initialize Express app
 const app = express();
 
-// Use middleware
-app.use(cors()); // Enable CORS
-app.use(bodyParser.json({ limit: '10mb' })); // Parse JSON bodies with increased size limit
-app.use(express.urlencoded({ extended: true, limit: '10mb' })); // Parse URL-encoded bodies
+// Middleware
+app.use(cors());
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Logger middleware
+// Logger
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.originalUrl}`);
   next();
 });
 
-// Routes
-app.use('/api/orders', orderRoutes);
-app.use('/api/stock', stockRoutes);
-
+// Global state for QR tracking
+let times = 0;
 let qrScanned = false;
 
-// Called when QR is scanned
+// Route: simulate QR scan
 app.get('/', (req, res) => {
-  qrScanned = true;
+  times++;
+  if (times >= 2) {
+    qrScanned = true;
+  }
   res.send("Car Spare Parts Inventory Tracker API Server");
 });
 
-// Called by frontend before submitting
+// Check if QR was scanned twice
 app.get('/api/check-scan', (req, res) => {
   res.json({ scanned: qrScanned });
 });
 
-// Error handling middleware
+// Submit order (requires 2 scans)
+app.post('/api/orders', async (req, res) => {
+  try {
+    if (!qrScanned) {
+      return res.status(400).json({ message: 'QR code not scanned twice yet' });
+    }
+
+    const order = new Order(req.body);
+    await order.save();
+
+    // Reset scan count after submission
+    times = 0;
+    qrScanned = false;
+
+    res.status(201).json({ message: 'Order submitted successfully', order });
+  } catch (err) {
+    console.error('Order submission error:', err);
+    res.status(500).json({ message: 'Failed to submit order' });
+  }
+});
+
+// Stock routes
+app.use('/api/stock', stockRoutes);
+
+// Error handling
 app.use((err, req, res, next) => {
   console.error('Server error:', err.stack);
   res.status(500).json({
@@ -46,12 +70,14 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Connect to MongoDB Atlas
+// Connect to MongoDB and start server
 mongoose.connect(MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB Atlas'))
-  .catch((err) => console.log('Error connecting to MongoDB Atlas: ', err));
-
-// Set the server to listen on a port
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+  .then(() => {
+    console.log('Connected to MongoDB Atlas');
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.log('Error connecting to MongoDB Atlas:', err);
+  });

@@ -1,28 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from './Navbar';
-import { QRCode } from 'qrcode.react';
+import { QRCodeSVG } from 'qrcode.react';
 import axios from 'axios';
 
-function QRDisplay({ onScan }) {
-  const [countdown, setCountdown] = useState(30);
+function QRDisplay({ onScan, onCancel }) {
+  const [countdown, setCountdown] = useState(60); // Extended to 60 seconds
+  const [scanStatus, setScanStatus] = useState("waiting"); // "waiting", "scanned", "timeout"
 
   // Countdown timer effect
   useEffect(() => {
-    if (countdown > 0) {
+    if (countdown > 0 && scanStatus === "waiting") {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
-    } else {
-      onScan(); // When countdown ends, trigger the onScan function
+    } else if (countdown === 0 && scanStatus === "waiting") {
+      setScanStatus("timeout");
     }
-  }, [countdown, onScan]);
+  }, [countdown, scanStatus]);
 
   // Check for scan status periodically
   useEffect(() => {
+    // Only check if we're still waiting for a scan
+    if (scanStatus !== "waiting") return;
+    
     const checkScanStatus = async () => {
       try {
         const res = await axios.get('https://stock-tracker-nox1.onrender.com/api/check-scan');
         if (res.data.scanned) {
-          onScan(); // If scanned, trigger the onScan function
+          setScanStatus("scanned");
         }
       } catch (err) {
         console.error('Error checking scan status:', err);
@@ -31,7 +35,16 @@ function QRDisplay({ onScan }) {
 
     const interval = setInterval(checkScanStatus, 2000);
     return () => clearInterval(interval);
-  }, [onScan]);
+  }, [scanStatus]);
+
+  // Trigger appropriate action when status changes
+  useEffect(() => {
+    if (scanStatus === "scanned") {
+      onScan(true); // Proceed with successful scan
+    } else if (scanStatus === "timeout") {
+      onCancel("QR code scan timed out. Please try again.");
+    }
+  }, [scanStatus, onScan, onCancel]);
 
   return (
     <div style={{ 
@@ -42,8 +55,29 @@ function QRDisplay({ onScan }) {
       boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
     }}>
       <h3>Scan to Confirm Order</h3>
-      <QRCode value="https://stock-tracker-nox1.onrender.com/" size={200} />
-      <p style={{ marginTop: '15px' }}>QR code will disappear in {countdown} seconds</p>
+      <QRCodeSVG value="https://stock-tracker-nox1.onrender.com/" size={200} />
+      <p style={{ marginTop: '15px' }}>
+        {scanStatus === "waiting" ? 
+          `Time remaining: ${countdown} seconds` : 
+          scanStatus === "scanned" ? 
+            "Scan confirmed! Processing order..." : 
+            "Time expired. Returning to form..."
+        }
+      </p>
+      <button 
+        onClick={() => onCancel("QR code scan canceled.")}
+        style={{
+          padding: '8px 15px',
+          backgroundColor: '#f44336',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          marginTop: '15px',
+          cursor: 'pointer'
+        }}
+      >
+        Cancel
+      </button>
     </div>
   );
 }
@@ -57,6 +91,7 @@ function User() {
   const [showQR, setShowQR] = useState(false);
   const [currentItemId, setCurrentItemId] = useState(null);
   const [errors, setErrors] = useState({});
+  const [statusMessage, setStatusMessage] = useState("");
   const [customerDetails, setCustomerDetails] = useState({
     name: '',
     address: '',
@@ -163,16 +198,42 @@ function User() {
     setCurrentItemId(id);
     setShowForm(true);
     setShowQR(false); // Ensure QR is hidden when opening the form
+    setStatusMessage(""); // Clear any previous status messages
   };
 
-  const handleQRScan = () => {
-    setShowQR(false); // Hide QR after scan
-    submitOrder(); // Proceed with order submission
+  const handleQRScan = (success) => {
+    if (success) {
+      submitOrder(); // Only proceed with order if scan was successful
+    } else {
+      setShowQR(false); // Hide QR if not successful
+      setStatusMessage("QR code scan failed. Please try again.");
+    }
+  };
+
+  const handleQRCancel = (message) => {
+    setShowQR(false);
+    setStatusMessage(message || "QR code scan canceled.");
   };
 
   const handleRequestQR = () => {
     if (!validateForm()) return;
-    setShowQR(true); // Show QR code when form is valid
+    
+    // Reset any QR scan status on the server before showing the QR
+    resetScanStatus().then(() => {
+      setStatusMessage("");
+      setShowQR(true); // Show QR code when form is valid
+    });
+  };
+
+  // New function to reset scan status on the server
+  const resetScanStatus = async () => {
+    try {
+      await axios.post('https://stock-tracker-nox1.onrender.com/api/reset-scan');
+      return true;
+    } catch (err) {
+      console.error('Error resetting scan status:', err);
+      return false;
+    }
   };
 
   const validateForm = () => {
@@ -184,20 +245,31 @@ function User() {
     } else if (!/^\d{10}$/.test(customerDetails.phone)) {
       newErrors.phone = 'Phone must be 10 digits';
     }
+    
+    // Check if quantity is entered
+    const qty = parseInt(orderQuantities[currentItemId]);
+    if (isNaN(qty) || qty <= 0) {
+      newErrors.quantity = 'Please enter a valid quantity';
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const submitOrder = async () => {
     const qty = parseInt(orderQuantities[currentItemId]);
+    
+    // Double check quantity (should already be validated, but just in case)
     if (isNaN(qty) || qty <= 0) {
-      alert('Please enter a valid quantity.');
+      setStatusMessage('Please enter a valid quantity.');
+      setShowQR(false);
       return;
     }
 
     const item = stockEntries.find(entry => entry._id === currentItemId);
     if (!item || item.spares < qty) {
-      alert(`Only ${item?.spares || 0} items available.`);
+      setStatusMessage(`Only ${item?.spares || 0} items available.`);
+      setShowQR(false);
       return;
     }
 
@@ -217,6 +289,7 @@ function User() {
       if (res.ok) {
         alert('Order placed successfully!');
         setShowForm(false);
+        setShowQR(false);
         setCustomerDetails({ name: '', address: '', phone: '' });
 
         // Update inventory after order is placed
@@ -236,11 +309,13 @@ function User() {
         }
       } else {
         const errorData = await res.json();
-        alert(`Failed to place order: ${errorData.message}`);
+        setStatusMessage(`Failed to place order: ${errorData.message}`);
+        setShowQR(false);
       }
     } catch (err) {
       console.error('Order error:', err);
-      alert('An error occurred while placing the order.');
+      setStatusMessage('An error occurred while placing the order.');
+      setShowQR(false);
     }
   };
   
@@ -415,9 +490,21 @@ function User() {
                 <h2 style={{ marginBottom: '20px', color: '#333' }}>🧾 Enter Customer Details</h2>
 
                 {showQR ? (
-                  <QRDisplay onScan={handleQRScan} />
+                  <QRDisplay onScan={handleQRScan} onCancel={handleQRCancel} />
                 ) : (
                   <>
+                    {statusMessage && (
+                      <div style={{ 
+                        padding: '10px', 
+                        backgroundColor: '#ffebee', 
+                        borderRadius: '5px',
+                        marginBottom: '15px',
+                        color: '#d32f2f'
+                      }}>
+                        {statusMessage}
+                      </div>
+                    )}
+                
                     <input
                       type="text"
                       placeholder="Name"
@@ -444,6 +531,8 @@ function User() {
                       style={inputStyle}
                     />
                     {errors.phone && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.phone}</div>}
+                    
+                    {errors.quantity && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.quantity}</div>}
 
                     <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
                       <button style={submitButtonStyle} onClick={handleRequestQR}>✅ Submit Order</button>
