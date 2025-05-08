@@ -543,7 +543,7 @@ function User() {
                 onChange={(e) => setAgreedToTerms(e.target.checked)}
                 style={{ marginRight: '8px' }}
               />
-              Once paid, not refundable
+               I acknowledge that once payment is made, it is non-refundable.
             </label>
           </div>
 
