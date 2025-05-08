@@ -1,5 +1,52 @@
 import React, { useEffect, useState } from 'react';
 import Navbar from './Navbar';
+import { QRCode } from 'qrcode.react';
+import axios from 'axios';
+
+function QRDisplay({ onScan }) {
+  const [countdown, setCountdown] = useState(30);
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    } else {
+      onScan(); // When countdown ends, trigger the onScan function
+    }
+  }, [countdown, onScan]);
+
+  // Check for scan status periodically
+  useEffect(() => {
+    const checkScanStatus = async () => {
+      try {
+        const res = await axios.get('https://stock-tracker-nox1.onrender.com/api/check-scan');
+        if (res.data.scanned) {
+          onScan(); // If scanned, trigger the onScan function
+        }
+      } catch (err) {
+        console.error('Error checking scan status:', err);
+      }
+    };
+
+    const interval = setInterval(checkScanStatus, 2000);
+    return () => clearInterval(interval);
+  }, [onScan]);
+
+  return (
+    <div style={{ 
+      textAlign: 'center', 
+      backgroundColor: '#f0f8ff', 
+      padding: '20px', 
+      borderRadius: '10px',
+      boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+    }}>
+      <h3>Scan to Confirm Order</h3>
+      <QRCode value="https://stock-tracker-nox1.onrender.com/" size={200} />
+      <p style={{ marginTop: '15px' }}>QR code will disappear in {countdown} seconds</p>
+    </div>
+  );
+}
 
 function User() {
   const [stockEntries, setStockEntries] = useState([]);
@@ -7,6 +54,7 @@ function User() {
   const [orderHistory, setOrderHistory] = useState([]);
   const [filter, setFilter] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [showQR, setShowQR] = useState(false);
   const [currentItemId, setCurrentItemId] = useState(null);
   const [errors, setErrors] = useState({});
   const [customerDetails, setCustomerDetails] = useState({
@@ -114,23 +162,18 @@ function User() {
   const handleOrder = (id) => {
     setCurrentItemId(id);
     setShowForm(true);
+    setShowQR(false); // Ensure QR is hidden when opening the form
   };
 
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
-  
-    const wasScanned = await axios.get('https://stock-tracker-nox1.onrender.com/api/check-scan')
-      .then(res => res.data.scanned)
-      .catch(() => false);
-  
-    if (!wasScanned) {
-      alert('❌ Please scan the QR code before proceeding.');
-      return;
-    }
-  
-    submitOrder(); // Proceed if scanned
+  const handleQRScan = () => {
+    setShowQR(false); // Hide QR after scan
+    submitOrder(); // Proceed with order submission
   };
-  
+
+  const handleRequestQR = () => {
+    if (!validateForm()) return;
+    setShowQR(true); // Show QR code when form is valid
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -160,9 +203,8 @@ function User() {
 
     const order = {
       productId: currentItemId,
-      quantity: qty, // Changed from quantityOrdered to quantity to match backend
+      quantity: qty,
       customerDetails,
-      // Remove productSnapshot as backend creates it from product data
     };
 
     try {
@@ -173,7 +215,7 @@ function User() {
       });
 
       if (res.ok) {
-        alert('Order placed!');
+        alert('Order placed successfully!');
         setShowForm(false);
         setCustomerDetails({ name: '', address: '', phone: '' });
 
@@ -289,7 +331,7 @@ function User() {
               style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd' }}
             />
           </div>
-          
+
           {/* Products Grid */}
           <h2>Available Spare Parts</h2>
           {filteredEntries.length === 0 ? (
@@ -365,46 +407,53 @@ function User() {
               ))}
             </div>
           )}
+
+          {/* Customer Details Modal */}
           {showForm && (
-          <div style={modalStyle}>
-            <div style={modalContentStyle}>
-              <h2 style={{ marginBottom: '20px', color: '#333' }}>🧾 Enter Customer Details</h2>
+            <div style={modalStyle}>
+              <div style={modalContentStyle}>
+                <h2 style={{ marginBottom: '20px', color: '#333' }}>🧾 Enter Customer Details</h2>
 
-              <input
-                type="text"
-                placeholder="Name"
-                value={customerDetails.name}
-                onChange={e => setCustomerDetails({ ...customerDetails, name: e.target.value })}
-                style={inputStyle}
-              />
-              {errors.name && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.name}</div>}
+                {showQR ? (
+                  <QRDisplay onScan={handleQRScan} />
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      placeholder="Name"
+                      value={customerDetails.name}
+                      onChange={e => setCustomerDetails({ ...customerDetails, name: e.target.value })}
+                      style={inputStyle}
+                    />
+                    {errors.name && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.name}</div>}
 
-              <input
-                type="text"
-                placeholder="Address"
-                value={customerDetails.address}
-                onChange={e => setCustomerDetails({ ...customerDetails, address: e.target.value })}
-                style={inputStyle}
-              />
-              {errors.address && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.address}</div>}
+                    <input
+                      type="text"
+                      placeholder="Address"
+                      value={customerDetails.address}
+                      onChange={e => setCustomerDetails({ ...customerDetails, address: e.target.value })}
+                      style={inputStyle}
+                    />
+                    {errors.address && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.address}</div>}
 
-              <input
-                type="text"
-                placeholder="Phone"
-                value={customerDetails.phone}
-                onChange={e => setCustomerDetails({ ...customerDetails, phone: e.target.value })}
-                style={inputStyle}
-              />
-              {errors.phone && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.phone}</div>}
+                    <input
+                      type="text"
+                      placeholder="Phone"
+                      value={customerDetails.phone}
+                      onChange={e => setCustomerDetails({ ...customerDetails, phone: e.target.value })}
+                      style={inputStyle}
+                    />
+                    {errors.phone && <div style={{ color: 'red', fontSize: '12px', marginBottom: '10px' }}>{errors.phone}</div>}
 
-              <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
-                <button style={submitButtonStyle} onClick={handleSubmit}>✅ Submit Order</button>
-                <button style={cancelButtonStyle} onClick={() => setShowForm(false)}>❌ Cancel</button>
+                    <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', gap: '10px' }}>
+                      <button style={submitButtonStyle} onClick={handleRequestQR}>✅ Submit Order</button>
+                      <button style={cancelButtonStyle} onClick={() => setShowForm(false)}>❌ Cancel</button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
-          </div>
-        )}
-
+          )}
         </div>
       </div>
     </div>
