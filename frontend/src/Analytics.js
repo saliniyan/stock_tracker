@@ -158,8 +158,7 @@ const Analytics = () => {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey="count" name="Quantity Ordered" fill="#8884d8" />
-              <Bar dataKey="totalRevenue" name="Cost (₹)" fill="#82ca9d" />
+              <Bar dataKey="totalRevenue" name="Total Ordered Cost (₹)" fill="#82ca9d" />
             </BarChart>
           </ResponsiveContainer>
         </div>
