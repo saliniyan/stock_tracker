@@ -24,9 +24,9 @@ This project is a **Stock Tracker Web Application** designed to manage car spare
 
 ## 🧰 Tech Stack
 
-| Frontend   | Backend    | Database | Others                                     |
-|------------|------------|----------|--------------------------------------------|
-| React.js   | Express.js | MongoDB  | Local Storage API (for session management) |
+| Frontend   | Backend    | Database | Others                                 |
+|------------|------------|----------|----------------------------------------|
+| React.js   | Express.js | MongoDB  | Local Storage (for session management) |
 
 ---
 
@@ -70,14 +70,14 @@ cd ../client
 npm start
 
 Now open your browser and go to: http://localhost:3000
-
+```
 
 🔐 Authentication
 
     Admin Username: admin
 
     Admin Password: 123
-    
+
 ## 📸 Screenshots
 
 ### 🏠 Home Page
