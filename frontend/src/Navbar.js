@@ -33,10 +33,8 @@ function Navbar() {
           </>
         ) : (
           <Link to="/login">
-            <img
-              src="/admin-icon.png"
-              alt="Admin Login"
-            />
+            
+            <p>Admin Login</p>
           </Link>
         )}
       </nav>
