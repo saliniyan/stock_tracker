@@ -5,14 +5,27 @@ import {
 } from 'recharts';
 
 const Analytics = () => {
-  const [time, setTime] = React.useState(new Date().toLocaleTimeString());
+  const quotes = [
+  "Quality means doing it right when no one is looking. – Henry Ford",
+  "An investment in knowledge pays the best interest. – Benjamin Franklin",
+  "Success is not final, failure is not fatal: it is the courage to continue that counts. – Winston Churchill",
+  "Do something today that your future self will thank you for.",
+  "Great things are done by a series of small things brought together. – Vincent Van Gogh"
+];
+const [currentQuote, setCurrentQuote] = useState(quotes[0]);
 
-  React.useEffect(() => {
-    const interval = setInterval(() => {
-      setTime(new Date().toLocaleTimeString());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
+useEffect(() => {
+  const interval = setInterval(() => {
+    setCurrentQuote(prev => {
+      const currentIndex = quotes.indexOf(prev);
+      const nextIndex = (currentIndex + 1) % quotes.length;
+      return quotes[nextIndex];
+    });
+  }, 5000); // change every 5 seconds
+  return () => clearInterval(interval);
+}, []);
+
+
   const [stockEntries, setStockEntries] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -115,7 +128,10 @@ const Analytics = () => {
 
   return (
     <div style={{ padding: '30px' }}>
-      <p>Time: {time}</p>
+      <div style={{ textAlign: 'center', margin: '20px 0', fontStyle: 'italic', fontSize: '16px' }}>
+        "{currentQuote}"
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '20px', marginTop: '20px' }}>
         {/* Chart 1: Top Ordered Products */}
         <div style={{ backgroundColor: '#f0f8ff', padding: '20px', borderRadius: '10px' }}>

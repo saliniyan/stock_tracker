@@ -39,8 +39,8 @@ function Dashboard() {
   }, {});
 
   // Top parts by quantity
-  const topParts = Object.entries(partsByCompany)
-    .sort((a, b) => b[1] - a[1])
+  const leastProduct = Object.entries(partsByCompany)
+    .sort((a, b) => a[1] - b[1])
     .slice(0, 5);
 
   return (
@@ -93,10 +93,10 @@ function Dashboard() {
         
         {/* Right column - Top Parts */}
         <div style={{ flex: '1', padding: '20px', backgroundColor: '#f9f9f9', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}>
-          <h3>Top Parts by Quantity</h3>
-          {topParts.length > 0 ? (
+          <h3>Least Parts by Quantity</h3>
+          {leastProduct.length > 0 ? (
             <div>
-              {topParts.map(([part, quantity], index) => (
+              {leastProduct.map(([part, quantity], index) => (
                 <div key={part} style={{ padding: '10px', borderBottom: '1px solid #eee' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>#{index + 1} {part}</span>
@@ -105,7 +105,7 @@ function Dashboard() {
                   <div style={{ marginTop: '5px', backgroundColor: '#e9e9e9', borderRadius: '4px', height: '10px' }}>
                     <div 
                       style={{ 
-                        width: `${(quantity / topParts[0][1]) * 100}%`, 
+                        width: `${(quantity / leastProduct[leastProduct.length-1][1]) * 100}%`, 
                         backgroundColor: '#4CAF50', 
                         height: '10px',
                         borderRadius: '4px'
