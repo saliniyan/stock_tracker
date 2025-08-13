@@ -1,4 +1,4 @@
-# 🚗 Stock Tracker - Car Spare Parts Inventory & Order Management
+# Stock Tracker - Car Spare Parts Inventory & Order Management
 
 This project is a **Stock Tracker Web Application** designed to manage car spare parts inventory and order processing efficiently. It is a full-stack application built with a React frontend, Express.js backend, and MongoDB database.
 
@@ -8,21 +8,21 @@ This project is a **Stock Tracker Web Application** designed to manage car spare
 
 ## 📌 Features
 
-### 👨‍💼 Admin Features
+### Admin Features
 
-- 🔧 **Add Spare Parts**: Admin can add new car spare parts to the inventory.
-- 📋 **View & Manage Inventory**: View current stock and update quantities.
-- 📑 **View All Orders**: Track every order placed by users.
-- 📊 **Inventory Insights**: Analyze stock availability and demand trends.
+-  **Add Spare Parts**: Admin can add new car spare parts to the inventory.
+-  **View & Manage Inventory**: View current stock and update quantities.
+-  **View All Orders**: Track every order placed by users.
+-  **Inventory Insights**: Analyze stock availability and demand trends.
 
-### 🙋‍♂️ User Features
+### User Features
 
-- 🛒 **Place Orders**: Users can browse available spare parts and place orders.
-- 📊 **Dashboard**: Users can view spare part trends.
+-  **Place Orders**: Users can browse available spare parts and place orders.
+-  **Dashboard**: Users can view spare part trends.
 
 ---
 
-## 🧰 Tech Stack
+## Tech Stack
 
 | Frontend   | Backend    | Database | Others                                 |
 |------------|------------|----------|----------------------------------------|
@@ -30,9 +30,9 @@ This project is a **Stock Tracker Web Application** designed to manage car spare
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
-### 🛠️ Installation
+### Installation
 
 1. **Clone the repository**
 

@@ -20,7 +20,7 @@ export function AuthProvider({ children }) {
 
   const login = (newRole) => {
     setRole(newRole);
-    localStorage.setItem('role', newRole); // ensures persistence across tabs
+    localStorage.setItem('role', newRole);
   };
 
   const logout = () => {
